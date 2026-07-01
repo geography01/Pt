@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     // =================================================================
     // ⚙️ एडमिन कंट्रोलर (ADMIN GATEWAY CONTROLLER)
     // =================================================================
-    const ACTIVE_GATEWAY = "jiopay"; 
+    const ACTIVE_GATEWAY = "upitranzact"; 
     // =================================================================
 
     // =================================================================
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
             return res.status(200).json({
                 success: true,
                 gateway: "upitranzact",
-                vpa: "raywiwy250@ybl", 
+                vpa: "rahul880250@ybl", 
                 merchantName: "GKnews Store",
                 amount: amount,
                 redirectUrl: redirectUrl // फ्रंटएंड को लिंक भेजा जा रहा है
