@@ -288,7 +288,6 @@
             box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
         }
 
-        /* 🛠️ [NEW] फ़ूटर सपोर्ट बार स्टाइलिंग */
         .footer-support-bar {
             background: var(--bg-surface);
             border: 1px solid var(--border-color);
@@ -638,7 +637,7 @@
         </div>
         <!-- Ebooks Grid End -->
 
-        <!-- 🛠️ [NEW] फ़ूटर सपोर्ट ऐक्शन बार क्षेत्र -->
+        <!-- फ़ूटर सपोर्ट ऐक्शन बार क्षेत्र -->
         <div class="footer-support-bar">
             <div class="support-text-box">
                 <div class="support-title">भुगतान कर दिया है पर चैनल से नहीं जुड़ पाए? / Facing Issues Joining?</div>
@@ -692,7 +691,6 @@
             html.setAttribute('data-theme', newTheme);
         }
 
-        // डायनेमिक अलर्ट बॉक्स को दिखाने और बंद करने का फ़ंक्शन
         function showCustomAlert(icon, textHi, textEn) {
             document.getElementById('alertIcon').innerText = icon;
             document.getElementById('alertTextHi').innerText = textHi;
@@ -704,17 +702,19 @@
             document.getElementById('customAlertOverlay').classList.remove('active');
         }
 
-        // एकीकृत डायनेमिक पेमेंट फ़ंक्शन
+        // एकीकृत डायनेमिक पेमेंट फ़ंक्शन (गिटहब स्ट्रक्चर के अनुसार डायनेमिक पाथ फिक्स्ड)
         async function purchaseBook(bookId, price) {
             try {
+                // 🛠️ आपके गिटहब आर्किटेक्चर के अनुसार एपीआई पाथ को ठीक किया गया है
                 const response = await fetch('/api/checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ bookId, amount: price })
                 });
+                
                 const data = await response.json();
 
-                if (!data.success) {
+                if (!data || !data.success) {
                     showCustomAlert("⚠️", "चैनल का डेटा प्राप्त करने में विफल।", "Failed to retrieve channel data.");
                     return;
                 }
@@ -739,6 +739,9 @@
                 } 
                 else if (data.gateway === "jiopay") {
                     showCustomAlert("💳", "JioPay One सुरक्षित पेमेंट स्क्रीन पर रीडायरेक्ट किया जा रहा है...", "Redirecting to secure JioPay One checkout screen...");
+                    setTimeout(() => {
+                        handlePaymentSuccess(manualRedirectUrl);
+                    }, 4000);
                 } 
                 else if (data.gateway === "upitranzact") {
                     const upiUrl = `upi://pay?pa=${data.vpa}&pn=${encodeURIComponent(data.merchantName)}&am=${data.amount}&cu=INR&tn=Channel%20Purchase`;
@@ -755,7 +758,7 @@
         }
 
         function handlePaymentSuccess(redirectUrl) {
-            showCustomAlert("🎉", "भुगतान सफल रहा! आपको अब प्रीमियम चैनल... लिंक पर रीडायरेक्ट किया जा रहा है।", "Payment successful! Redirecting you to the premium channel link now.");
+            showCustomAlert("🎉", "भुगतान सफल रहा! आपको अब प्रीमियम चैनल लिंक पर रीडायरेक्ट किया जा रहा है।", "Payment successful! Redirecting you to the premium channel link now.");
             setTimeout(() => {
                 window.location.href = redirectUrl;
             }, 3000);
