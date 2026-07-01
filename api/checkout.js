@@ -50,7 +50,7 @@ async function purchaseBook(bookId, price) {
         
         // 🟢 रूट 2: यदि मैन्युअल सेटिंग्स में UPITranzact चालू है (डायरेक्ट UPI Apps ट्रिगर)
         else if (MANUAL_ACTIVE_GATEWAY === "upitranzact") {
-            const myUpiId = "raywiwy250@ybl"; // आपकी UPI ID
+            const myUpiId = "rahul880250@ybl"; // आपकी UPI ID
             const myMerchantName = "GKnews Store"; // आपका मर्चेंट नाम
             
             // मोबाइल यूजर्स के लिए सीधा UPI Apps (PhonePe, Paytm, GooglePay) खोलने का लिंक
