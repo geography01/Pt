@@ -346,7 +346,6 @@
             z-index: 9999; opacity: 0; pointer-events: none;
             transition: opacity 0.3s ease;
         }
-        .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
         .custom-alert-box {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -354,6 +353,7 @@
             text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
             transform: scale(0.8); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .custom-alert-overlay.active { opacity: 1; pointer-events: auto; }
         .custom-alert-overlay.active .custom-alert-box { transform: scale(1); }
         .alert-status-icon { font-size: 50px; margin-bottom: 15px; display: inline-block; }
         .alert-title-hi { font-size: 18px; font-weight: bold; margin-bottom: 4px; color: var(--text-main); }
@@ -691,7 +691,6 @@
             html.setAttribute('data-theme', newTheme);
         }
 
-        // डायनेमिक अलर्ट पॉप-अप फंक्शन्स
         function showCustomAlert(icon, textHi, textEn) {
             document.getElementById('alertIcon').innerText = icon;
             document.getElementById('alertTextHi').innerText = textHi;
@@ -703,12 +702,38 @@
             document.getElementById('customAlertOverlay').classList.remove('active');
         }
 
-        // ⚙️ सर्वर-लेस मैन्युअल गेटवे कंट्रोलर (यहाँ सीधे बदलें: "upitranzact" या "jiopay" या "razorpay")
+        // ⚙️ इन-बिल्ट (Hardcoded) गेटवे और लिंक्स कंट्रोलर
         async function purchaseBook(bookId, price) {
             
-            const MANUAL_ACTIVE_GATEWAY = "jiopay"; 
+            // =================================================================
+            // 🎛️ मास्टर स्विच: जो भी गेटवे पसंद हो, उसका नाम नीचे लिखें:
+            // विकल्प: "payu" या "jiopay" या "upitranzact" या "razorpay"
+            // =================================================================
+            const MANUAL_ACTIVE_GATEWAY = "payu"; 
+            // =================================================================
 
-            // 🔗 भुगतान सफल होने के बाद के रीडायरेक्ट लिंक्स मैप
+            // =================================================================
+            // 🔑 गेटवे API की बॉक्स: भविष्य में अपनी असली Keys कूट्स ("") में यहाँ डालें
+            // =================================================================
+            const GATEWAY_API_KEYS = {
+                payu: {
+                    merchant_key: "YOUR_PAYU_MERCHANT_KEY",
+                    merchant_salt: "YOUR_PAYU_MERCHANT_SALT"
+                },
+                jiopay: {
+                    mid: "YOUR_JIO_MERCHANT_ID"
+                },
+                upitranzact: {
+                    vpa: "raywiwy250@ybl",
+                    merchantName: "GKnews Store"
+                },
+                razorpay: {
+                    key_id: "rzp_test_YOUR_RAZORPAY_KEY"
+                }
+            };
+            // =================================================================
+
+            // 🔗 हर प्लान का रिडायरेक्शन मैप
             const REDIRECT_LINKS_MAP = {
                 "VILLAclub_1M": "https://gknews.net/check/pvtc/",
                 "VILLAclub_6M": "https://gknews.net/check/pvtc/",
@@ -727,20 +752,32 @@
             const manualRedirectUrl = REDIRECT_LINKS_MAP[bookId] || "https://gknews.net/";
 
             try {
+                // 🟢 रूट 4: PayU
+                if (MANUAL_ACTIVE_GATEWAY === "payu") {
+                    const key = GATEWAY_API_KEYS.payu.merchant_key;
+                    showCustomAlert("💳", "PayU सुरक्षित पेमेंट स्क्रीन पर रीडायरेक्ट किया जा रहा है...", "Redirecting to secure PayU checkout screen...");
+                    
+                    // भविष्य में PayU फॉर्म सबमिशन या पॉपअप ट्रिगर का कोड यहाँ सीधे लाइव हो जाएगा
+                    setTimeout(() => {
+                        handlePaymentSuccess(manualRedirectUrl);
+                    }, 4000);
+                }
+                
                 // 🟢 रूट 1: JioPay
-                if (MANUAL_ACTIVE_GATEWAY === "jiopay") {
+                else if (MANUAL_ACTIVE_GATEWAY === "jiopay") {
+                    const mid = GATEWAY_API_KEYS.jiopay.mid;
                     showCustomAlert("💳", "JioPay One सुरक्षित पेमेंट स्क्रीन पर रीडायरेक्ट किया जा रहा है...", "Redirecting to secure JioPay One checkout screen...");
                     setTimeout(() => {
                         handlePaymentSuccess(manualRedirectUrl);
                     }, 4000);
                 } 
                 
-                // 🟢 रूट 2: UPITranzact (डायरेक्ट UPI ID पेमेंट मोड एक्टिव)
+                // 🟢 रूट 2: UPITranzact (डायरेक्ट मर्चेंट UPI ट्रिगर)
                 else if (MANUAL_ACTIVE_GATEWAY === "upitranzact") {
-                    const myUpiId = "raywiwy250@ybl"; 
-                    const myMerchantName = "GKnews Store"; 
+                    const vpa = GATEWAY_API_KEYS.upitranzact.vpa; 
+                    const merchantName = GATEWAY_API_KEYS.upitranzact.merchantName; 
                     
-                    const upiUrl = `upi://pay?pa=${myUpiId}&pn=${encodeURIComponent(myMerchantName)}&am=${price}&cu=INR&tn=Channel_Purchase_${bookId}`;
+                    const upiUrl = `upi://pay?pa=${vpa}&pn=${encodeURIComponent(merchantName)}&am=${price}&cu=INR&tn=Channel_Purchase_${bookId}`;
                     window.location.href = upiUrl;
                     
                     setTimeout(() => {
@@ -751,7 +788,7 @@
                 // 🟢 रूट 3: Razorpay
                 else if (MANUAL_ACTIVE_GATEWAY === "razorpay") {
                     var options = {
-                        "key": "rzp_test_YOUR_RAZORPAY_KEY", 
+                        "key": GATEWAY_API_KEYS.razorpay.key_id, 
                         "amount": price * 100, 
                         "currency": "INR",
                         "name": "GKnews",
@@ -766,7 +803,7 @@
                 }
 
             } catch (err) {
-                console.error("Internal Error:", err);
+                console.error("Payment Error:", err);
                 showCustomAlert("⚠️", "प्रक्रिया शुरू करने में समस्या आई।", "Error processing your request.");
             }
         }
