@@ -700,46 +700,45 @@
             document.getElementById('customAlertOverlay').classList.remove('active');
         }
 
-        // 🎯 100% वर्किंग ओरिजिन-पे (OriginPay) सिक्योर क्लाइंट-साइड रिडायरेक्शन यूआरएल सेटअप
+        // एकीकृत डायनेमिक पेमेंट फ़ंक्शन (OriginPay लाइव API आर्किटेक्चर इंटीग्रेटेड)
         async function purchaseBook(bookId, price) {
             try {
-                showCustomAlert("⚙️", "OriginPay मर्चेंट चेकआउट लोड हो रहा है...", "Loading secure checkout page...");
+                showCustomAlert("⚙️", "भुगतान प्रक्रिया सुरक्षित रूप से शुरू हो रही है...", "Initiating secure payment flow...");
 
-                // 🔗 हर पोस्ट/प्लान का टेलीग्राम डेस्टिनेशन लिंक मैप
-                const REDIRECT_LINKS_MAP = {
-                    "VILLAclub_1M": "https://gknews.net/check/pvtc/",
-                    "VILLAclub_6M": "https://gknews.net/check/pvtc/",
-                    "VILLAclub_1Y": "https://gknews.net/check/pvtc/",
-                    "Sweet_Sinner": "https://gknews.net/check/join-premium-sweet-sinner-telegram-channel/",
-                    "MissaX_Channel": "https://graph.org/MissaX-Channel-08-08",
-                    "ShopLyfter": "https://gknews.net/check/join-premium-shoplyfter-telegram-channel/",
-                    "PureTaboo": "https://gknews.net/check/join-premium-puretaboo-telegram-channel/",
-                    "BrattySis": "https://gknews.net/check/join-premium-brattysis-telegram-channel/",
-                    "SisSwap": "https://gknews.net/check/join-premium-sisswap-telegram-channel/",
-                    "Family_Swap": "https://gknews.net/check/join-premium-family-swap-telegram-channel/",
-                    "Mommys_Boy": "https://gknews.net/check/join-premium-mommys-boy-telegram-channel/",
-                    "Not_My_Grandpa": "https://gknews.net/check/join-premium-not-my-granda-telegram-channel/"
-                };
+                // Vercel बैकएंड API (/api/checkout) को मर्चेंट रिक्वेस्ट भेजना
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bookId, amount: price })
+                });
+                
+                const data = await response.json();
 
-                const manualRedirectUrl = REDIRECT_LINKS_MAP[bookId] || "https://gknews.net/";
+                // यदि सर्वर या एपीआई रिस्पांस फेल हो जाता है
+                if (!data || !data.success) {
+                    showCustomAlert("⚠️", data.message || "पेमेंट लिंक प्राप्त करने में विफल। कृपया बैकएंड कीज़ की जांच करें।", "Failed to retrieve configuration from secure server.");
+                    return;
+                }
 
-                // 🛑 बिना वेरिफिकेशन रीडायरेक्शन प्रोटेक्शन चालू:
-                // यहाँ हम सीधा मर्चेंट यूआरएल सिमुलेशन कर रहे हैं। बिना पैसे ट्रांसफर की पुष्टि हुए रीडायरेक्शन नहीं होगा।
-                setTimeout(() => {
-                    handlePaymentSuccess(manualRedirectUrl);
-                }, 3000);
+                closeCustomAlert();
+
+                // 🟢 सुरक्षित वेरिफिकेशन गेटवे: केवल OriginPay सर्वर के सक्सेस रिस्पॉन्स मिलने पर ही रीडायरेक्शन होगा
+                if (data.gateway === "upitranzact") {
+                    // मोबाइल डिवाइसेज के लिए डायरेक्ट Intent
+                    if (data.upi_intent && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                        window.location.href = data.upi_intent;
+                    } else if (data.payment_url) {
+                        // डेस्कटॉप और सामान्य ब्राउज़र्स के लिए सिक्योर चेकआउट स्क्रीन
+                        window.location.href = data.payment_url;
+                    } else {
+                        showCustomAlert("⚠️", "पेमेंट यूआरएल अमान्य है।", "Invalid payment URL received.");
+                    }
+                } 
 
             } catch (err) {
-                console.error("Gateway Test Error:", err);
+                console.error("Gateway Integration Error:", err);
                 showCustomAlert("⚠️", "भुगतान प्रक्रिया शुरू करने में त्रुटि। कृपया पुनः प्रयास करें।", "Error initiating payment process. Please try again.");
             }
-        }
-
-        function handlePaymentSuccess(redirectUrl) {
-            showCustomAlert("🎉", "भुगतान सफल रहा! आपको अब प्रीमियम चैनल लिंक पर रीडायरेक्ट किया जा रहा है।", "Payment successful! Redirecting you to the premium channel link now.");
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 3000);
         }
     </script>
 </body>
