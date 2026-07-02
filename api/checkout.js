@@ -38,8 +38,8 @@ export default async function handler(req, res) {
             // 🔑 🎯 अपनी असली ORIGINPAY / UPITRANZACT LIVE KEYS यहाँ डालें
             // =================================================================
             const MERCHANT_ID = "bwGiH0"; 
-            const PUBLIC_KEY = "utz_test_7ebce39ff223f06e"; 
-            const SECRET_KEY = "48d793de1d34f2beb66a3c0eabc82bfb"; 
+            const PUBLIC_KEY = "utz_live_e5048b33412458da"; 
+            const SECRET_KEY = "4d05c32752ea54131a3a8b746f45908b"; 
             // =================================================================
 
             const orderId = "ORD_" + Date.now() + Math.random().toString(36).substring(2, 5).toUpperCase();
