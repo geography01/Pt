@@ -1,15 +1,12 @@
 export default async function handler(req, res) {
-    // सिर्फ POST रिक्वेस्ट को अनुमति दें
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
     const { bookId, amount } = req.body;
-
-    // ⚙️ एडमिन कंट्रोलर: टेस्ट करने के लिए इसे "upitranzact" पर ही रखें
     const ACTIVE_GATEWAY = "upitranzact"; 
 
-    // 🔗 भुगतान सफल होने के बाद का मैन्युअल रीडायरेक्ट लिंक्स मैप
+    // 🔗 भुगतान सफल होने के बाद का टेलीग्राम रीडायरेक्ट लिंक्स मैप
     const REDIRECT_LINKS_MAP = {
         "VILLAclub_1M": "https://gknews.net/check/pvtc/",
         "VILLAclub_6M": "https://gknews.net/check/pvtc/",
@@ -33,18 +30,17 @@ export default async function handler(req, res) {
         }
 
         if (ACTIVE_GATEWAY === "upitranzact") {
-            
             // =================================================================
-            // 🔑 🎯 अपनी असली ORIGINPAY / UPITRANZACT LIVE KEYS यहाँ डालें
+            // 🔑 🎯 अपनी असली (या डेमो) ORIGINPAY / UPITRANZACT KEYS यहाँ डालें
             // =================================================================
             const MERCHANT_ID = "bwGiH0"; 
             const PUBLIC_KEY = "utz_live_e5048b33412458da"; 
             const SECRET_KEY = "4d05c32752ea54131a3a8b746f45908b"; 
             // =================================================================
 
-            const orderId = "ORD_" + Date.now() + Math.random().toString(36).substring(2, 5).toUpperCase();
+            const orderId = "ORD_" + Date.now();
 
-            // OriginPay API के नियमों के अनुसार मर्चेंट सर्वर पर रिक्वेस्ट भेजना
+            // OriginPay के ऑफिशियल सर्वर एंडपॉइंट पर रिक्वेस्ट भेजना
             const apiResponse = await fetch('https://api.upitranzact.com/api/v1/order/create', {
                 method: 'POST',
                 headers: {
@@ -62,29 +58,32 @@ export default async function handler(req, res) {
                 })
             });
 
+            // जांचें कि क्या रिस्पॉन्स सही आ रहा है
+            if (!apiResponse.ok) {
+                const errText = await apiResponse.text();
+                return res.status(400).json({ success: false, message: `OriginPay Server Error: ${errText}` });
+            }
+
             const apiData = await apiResponse.json();
 
-            // यदि OriginPay सर्ver सफलतापूर्वक पेमेंट लिंक या UPI Intent जनरेट कर देता है
             if (apiData && apiData.status === "success") {
                 return res.status(200).json({
                     success: true,
                     gateway: "upitranzact",
-                    payment_url: apiData.payment_url, // OriginPay द्वारा दिया गया पेमेंट पेज या QR लिंक
-                    upi_intent: apiData.upi_intent || null, // मोबाइल के लिए डायरेक्ट ऐप्स ट्रिगर लिंक
-                    redirectUrl: redirectUrl
+                    payment_url: apiData.payment_url, // मर्चेंट सुरक्षित पेमेंट स्क्रीन लिंक
+                    upi_intent: apiData.upi_intent || null
                 });
             } else {
-                // यदि कीज़ गलत हैं या कोई अन्य तकनीकी समस्या है
                 return res.status(400).json({ 
                     success: false, 
-                    message: apiData.message || "OriginPay API Error" 
+                    message: apiData.message || "कीज़ अमान्य हैं या डेमो मोड कॉन्फ़िगर नहीं है।" 
                 });
             }
         }
 
-        return res.status(400).json({ success: false, message: "Gateway not supported in this test mode" });
+        return res.status(400).json({ success: false, message: "No active gateway set" });
 
     } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false, message: "सर्वर कनेक्शन में त्रुटि: " + error.message });
     }
 }
